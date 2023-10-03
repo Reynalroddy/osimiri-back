@@ -72,6 +72,7 @@ export const createProduct = asyncError(async (req, res, next) => {
     images: [image],
   });
 
+  console.log('og')
   res.status(200).json({
     success: true,
     message: "Product Created Successfully",

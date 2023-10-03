@@ -8,7 +8,8 @@ import {
   processPayment,
   
   check,
-  very
+  very,
+  deleteOrder
 } from "../controllers/order.js";
 import { isAdmin, isAuthenticated } from "../middlewares/auth.js";
 
@@ -30,6 +31,6 @@ router.get("/admin", isAuthenticated, isAdmin, getAdminOrders);
 router
   .route("/single/:id")
   .get(isAuthenticated, getOrderDetails)
-  .put(isAuthenticated, isAdmin, proccessOrder);
-
+  .put(isAuthenticated, isAdmin, proccessOrder)
+  .delete(isAuthenticated, isAdmin, deleteOrder);
 export default router;

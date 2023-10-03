@@ -52,9 +52,10 @@ const schema = new mongoose.Schema({
       email:String
     }
   ],
+  subAt: { type: Date },
   activeSubType:{
-    type: String,
-    enum:['Daily','bidays','tridays','biweek','monthly','quarterly','6months','yearly'],
+    type: Number,
+    default:0
   },
   userCode:String
 });

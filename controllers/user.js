@@ -72,11 +72,11 @@ export const logOut = asyncError(async (req, res, next) => {
 
 export const getMyProfile = asyncError(async (req, res, next) => {
   const user = await User.findById(req.user._id);
-
-  res.status(200).json({
-    success: true,
-    user,
-  });
+  sendToken(user, res, `profile updated, ${user.username}`, 200);
+  // res.status(200).json({
+  //   success: true,
+  //   user,
+  // });
 });
 
 export const updateProfile = asyncError(async (req, res, next) => {

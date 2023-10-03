@@ -1,25 +1,26 @@
 import { asyncError } from "../middlewares/error.js";
-import { Order } from "../models/order.js";
-import { Product } from "../models/product.js";
+import { Subs } from "../models/sub.js";
+// import { Product } from "../models/product.js";
 import ErrorHandler from "../utils/error.js";
 import { stripe } from "../server.js";
-import { User } from "../models/user.js";
+import jwt from "jsonwebtoken";
 import  axios from "axios";
 import  crypto from "crypto";
-import { Subs } from "../models/sub.js";
-export const processPayment = asyncError(async (req, res, next) => {
-  const { totalAmount } = req.body;
+import { User } from "../models/user.js";
+import cron from "node-cron";
+// export const processPayment = asyncError(async (req, res, next) => {
+//   const { totalAmount } = req.body;
 
-  const { client_secret } = await stripe.paymentIntents.create({
-    amount: Number(totalAmount * 100),
-    currency: "inr",
-  });
+//   const { client_secret } = await stripe.paymentIntents.create({
+//     amount: Number(totalAmount * 100),
+//     currency: "inr",
+//   });
 
-  res.status(200).json({
-    success: true,
-    client_secret,
-  });
-});
+//   res.status(200).json({
+//     success: true,
+//     client_secret,
+//   });
+// });
 
 
 
@@ -56,31 +57,15 @@ export const check = async (req, res) => {
     const { reference } = event.data;
     console.log(event.data)
     console.log(reference)
-
-    if(reference.includes("sub")){
-// console.log('subscribe');
-const subordz = await Subs.findOne({ orderRef: reference });
-const userSub = subordz.user;
-const days = subordz.subType;
-// const decodedData = jwt.verify(token, process.env.JWT_SECRET);
-const ownz = await User.findById(subordz.user);
-// console.log(userSub);
-// console.log(ownz);
-ownz.activeSubType = days;
-ownz.isActiveSub = true;
-const newowner = await ownz.save();
+    const ordz = await Order.findOne({ orderRef: reference });
+    // console.log(ordz);
+    if (ordz) {
+      ordz.isPaid = true;
+      ordz.paidAt = Date.now();
+      const newords = await ordz.save();
     }
-    else{
-      const ordz = await Order.findOne({ orderRef: reference });
-      // console.log(ordz);
-      if (ordz) {
-        ordz.isPaid = true;
-        ordz.paidAt = Date.now();
-        const newords = await ordz.save();
-      }
-    }
+    // console.log(event);
   }
-
   res.sendStatus(200);
 };
 
@@ -103,41 +88,30 @@ export const very = async (req, res) => {
   res.json({ success: true, data: ress.data });
 };
 
-export const createOrder = asyncError(async (req, res, next) => {
+export const createSub = asyncError(async (req, res, next) => {
  
   const {
   
-    orderItems,
-  
-    itemsPrice,
-    taxPrice,
-    shippingCharges,
+benefit,
+
     totalAmount,
-    orderRef
+    orderRef,
+    subType,
+
   } = req.body;
 
-  await Order.create({
+  await Subs.create({
     user: req.user._id,
-    orderItems,
-    itemsPrice,
-    taxPrice,
-    shippingCharges,
+    benefit,
     totalAmount,
-    orderRef
+    orderRef,
+    subType,
   });
 
-  console.log(`ref:${orderRef}`)
-  // reducing each product upon ordering...
-  // for (let i = 0; i < orderItems.length; i++) {
-  //   const product = await Product.findById(orderItems[i].product);
-  //   product.stock -= orderItems[i].quantity;
-  //   await product.save();
-  // }
 
   res.status(201).json({
     success: true,
-    message: "Order Placed Successfully",
-   
+    message: "make payment",
   });
 });                            
 
@@ -165,6 +139,33 @@ console.log(orders)
     orders,
   });
 });
+
+
+
+export const checkSub = asyncError(async (req, res, next) => {
+  // const user = await User.find({ _id: req.user._id });
+  const { toks } = req.body;
+  // console.log(req.body)
+  const decodedData = jwt.verify(toks, process.env.JWT_SECRET);
+// console.log(decodedData)
+  const user = await User.findById(decodedData.userId);
+console.log(`user:${user}`);
+let respy ='';
+if(user?.isActiveSub === true){
+respy='user subscription is active.'
+}
+else{
+  respy='user subscription is not active.'
+}
+
+  res.status(200).json({
+    success: true,
+    message:respy
+  });
+}); 
+
+
+
 
 export const getOrderDetails = asyncError(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
@@ -206,4 +207,35 @@ export const proccessOrder = asyncError(async (req, res, next) => {
     success: true,
     message: "Order Processed Successfully",
   });
+});
+
+// */5 * * * * *..5secs,0 0 0 * * *..every 12am
+
+cron.schedule("0 0 0 * * *", async() => {
+  // const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  // await NotificationModel.deleteMany({status:"read",createdAt: {$lt: thirtyDaysAgo}});
+  // console.log('Deleted read notifications');
+  try {
+    // Find all users in the database
+    const users = await User.find();
+    // Loop through each user and perform an action (replace this with your action)
+     // Subtract 1 from the user's active days
+    for (const user of users) {
+      if(user.activeSubType > 0 ){
+user.activeSubType -= 1
+      }
+
+         // If active days are 0, set subscription to false
+         if (user.activeSubType === 0) {
+          user.isActiveSub = false;
+        }
+      // Save the updated user to the database
+      await user.save();
+
+    }
+
+    console.log('Cron job completed.');
+  } catch (error) {
+    console.error('Error:', error);
+  }
 });
