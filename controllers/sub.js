@@ -209,9 +209,9 @@ export const proccessOrder = asyncError(async (req, res, next) => {
   });
 });
 
-// */5 * * * * *..5secs,0 0 0 * * *..every 12am
+// */5 * * * * *..5secs, 0 0 * * *..every 12am
 
-cron.schedule("0 0 0 * * *", async() => {
+cron.schedule("0 0 * * *", async() => {
   // const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   // await NotificationModel.deleteMany({status:"read",createdAt: {$lt: thirtyDaysAgo}});
   // console.log('Deleted read notifications');

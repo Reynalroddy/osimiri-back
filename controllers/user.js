@@ -12,7 +12,8 @@ import cloudinary from "cloudinary";
 
 export const login = asyncError(async (req, res, next) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email });
+  // .select("+password");
 
   if (!user) {
     return next(new ErrorHandler("Incorrect Email or Password", 400));
