@@ -12,21 +12,21 @@ import cloudinary from "cloudinary";
 
 export const login = asyncError(async (req, res, next) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  // .select("+password");
+  const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
     return next(new ErrorHandler("Incorrect Email or Password", 400));
   }
 
   if (!password) return next(new ErrorHandler("Please Enter Password", 400));
-
+  console.log('before')
   // Handle error
   const isMatched = await user.comparePassword(password);
 
   if (!isMatched) {
     return next(new ErrorHandler("Incorrect Email or Password", 400));
   }
+  console.log(isMatched)
   sendToken(user, res, `Welcome Back, ${user.username}`, 200);
 });
 

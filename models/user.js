@@ -69,6 +69,8 @@ schema.pre("save", async function (next) {
 });
 
 schema.methods.comparePassword = async function (enteredPassword) {
+  console.log(this)
+  console.log(enteredPassword)
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
