@@ -82,7 +82,7 @@ export const very = async (req, res) => {
       Authorization: `Bearer ${secret}`,
     },
   };
-
+          
   const ress = await axios(config);
 
   res.json({ success: true, data: ress.data });

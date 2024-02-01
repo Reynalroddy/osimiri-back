@@ -55,11 +55,12 @@ export const check = async (req, res) => {
     // Do something with event
     const { reference } = event.data;
     console.log(event.data)
-    console.log(reference)
+    console.log('check',reference)
 
     if(reference.includes("sub")){
-// console.log('subscribe');
+console.log('subscribe');
 const subordz = await Subs.findOne({ orderRef: reference });
+console.log(subordz)
 const userSub = subordz.user;
 const days = subordz.subType;
 // const decodedData = jwt.verify(token, process.env.JWT_SECRET);
