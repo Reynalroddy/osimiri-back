@@ -209,9 +209,11 @@ export const proccessOrder = asyncError(async (req, res, next) => {
   });
 });
 
-// */5 * * * * *..5secs, 0 0 * * *..every 12am
 
-cron.schedule("0 0 * * *", async() => {
+
+// */5 * * * * *..5secs, 0 0 * * *..every 12am
+// */3 * * * * ...3 minutes
+cron.schedule("*/3 * * * *", async() => {
   // const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   // await NotificationModel.deleteMany({status:"read",createdAt: {$lt: thirtyDaysAgo}});
   // console.log('Deleted read notifications');
@@ -238,4 +240,7 @@ user.activeSubType -= 1
   } catch (error) {
     console.error('Error:', error);
   }
-});
+});                    
+          
+
+

@@ -80,10 +80,12 @@ const newowner = await ownz.save();
         const newords = await ordz.save();
       }
     }
-  }
-
+  }    
   res.sendStatus(200);
 };
+    
+    
+                                            
 
 export const very = async (req, res) => {
   const secret = process.env.PAY_SECRET;
