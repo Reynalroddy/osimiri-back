@@ -4,6 +4,7 @@ import { errorMiddleware } from "./middlewares/error.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import cron from "node-cron";
+import { User } from "./models/user.js";
 config({
   path: "./data/config.env",
 });
