@@ -3,7 +3,7 @@ import { config } from "dotenv";
 import { errorMiddleware } from "./middlewares/error.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-
+import cron from "node-cron";
 config({
   path: "./data/config.env",
 });
