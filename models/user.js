@@ -37,31 +37,28 @@ const schema = new mongoose.Schema({
 
   isPauseSub: {
     type: Boolean,
-    default: false
+    default: false,
   },
   isActiveSub: {
     type: Boolean,
-    default: false
+    default: false,
   },
-  pauseCount:{
+  pauseCount: {
     type: Number,
-    default: 0
+    default: 0,
   },
-  subscribers:[
+  subscribers: [
     {
-      email:String
-    }
+      email: String,
+    },
   ],
   subAt: { type: Date },
-  activeSubType:{
+  activeSubType: {
     type: Number,
-    default:0
+    default: 0,
   },
-  userCode:String
+  userCode: String,
 });
-
-
-         
 
 schema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
@@ -69,15 +66,29 @@ schema.pre("save", async function (next) {
 });
 
 schema.methods.comparePassword = async function (enteredPassword) {
-  console.log(this)
-  console.log(enteredPassword)
+  console.log(this);
+  console.log(enteredPassword);
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
 schema.methods.generateToken = function () {
-  return jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: "700d",
+  const refresh_token = jwt.sign(
+    { _id: this._id },
+    process.env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: "7d",
+    }
+  );
+
+  const access_token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
   });
+
+  const toks = {
+    refresh_token,
+    access_token,
+  };
+  return toks;
 };
 
 export const User = mongoose.model("User", schema);

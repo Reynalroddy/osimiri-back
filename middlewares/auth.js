@@ -10,7 +10,7 @@ export const isAuthenticated = asyncError(async (req, res, next) => {
   if (!authHeader || !authHeader.startsWith("Bearer")) {
     return next(new ErrorHandler("Authentication invalid", 401));
   }
-  
+
   const token = authHeader.split(" ")[1];
 
   if (!token) return next(new ErrorHandler("Not Logged In", 401));
@@ -22,6 +22,26 @@ export const isAuthenticated = asyncError(async (req, res, next) => {
   next();
 });
 
+export const isRefreshTokenAuthenticated = asyncError(
+  async (req, res, next) => {
+    // const token = req.cookies.token;
+    const authHeader = req.headers.authorization;
+    console.log(req.headers);
+    if (!authHeader || !authHeader.startsWith("Bearer")) {
+      return next(new ErrorHandler("Authentication invalid", 401));
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    if (!token) return next(new ErrorHandler("Not Logged In", 401));
+
+    const decodedData = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+
+    req.user = await User.findById(decodedData._id);
+
+    next();
+  }
+);
 
 // const authHeader = req.headers.authorization;
 // if (!authHeader || !authHeader.startsWith("Bearer")) {

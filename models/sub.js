@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 
 const schema = new mongoose.Schema({
-
-
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -12,18 +10,18 @@ const schema = new mongoose.Schema({
   paidAt: { type: Date },
   orderRef: { type: String, required: true },
 
-benefit:
-  {
-    type:String,
+  benefit: {
+    type: String,
     required: false,
   },
   totalAmount: {
     type: Number,
     required: true,
   },
-  subType:{
+  subType: {
     type: Number,
-    enum:[1,7,14,30,90,180,365],
+    enum: [1, 7, 14, 30, 90, 180, 365],
+    required: false,
   },
 });
 

@@ -19,19 +19,19 @@ export const login = asyncError(async (req, res, next) => {
   }
 
   if (!password) return next(new ErrorHandler("Please Enter Password", 400));
-  console.log('before')
+  console.log("before");
   // Handle error
   const isMatched = await user.comparePassword(password);
 
   if (!isMatched) {
     return next(new ErrorHandler("Incorrect Email or Password", 400));
   }
-  console.log(isMatched)
+  console.log(isMatched);
   sendToken(user, res, `Welcome Back, ${user.username}`, 200);
 });
 
 export const signup = asyncError(async (req, res, next) => {
-  const { username, email, password} = req.body;
+  const { username, email, password } = req.body;
 
   let user = await User.findOne({ email });
 
@@ -54,8 +54,8 @@ export const signup = asyncError(async (req, res, next) => {
     email,
     password,
   });
-      
-  generateCode(user._id,res)  
+
+  generateCode(user._id, res);
 });
 
 export const logOut = asyncError(async (req, res, next) => {
@@ -80,23 +80,50 @@ export const getMyProfile = asyncError(async (req, res, next) => {
   // });
 });
 
-export const updateProfile = asyncError(async (req, res, next) => {
+export const getNewTokens = asyncError(async (req, res, next) => {
   const user = await User.findById(req.user._id);
+  sendToken(user, res, `refreshed tokens, ${user.username}`, 200);
+  // res.status(200).json({
+  //   success: true,
+  //   user,
+  // });
+});
 
-  const { name, email, address, city, country, pinCode } = req.body;
+export const updateProfile = asyncError(async (req, res, next) => {
+  const user = await User.findById(req.user._id).select("+password");
 
-  if (name) user.name = name;
+  const {
+    username,
+    email,
+    address,
+    city,
+    country,
+    pinCode,
+    oldPassword,
+    newPassword,
+  } = req.body;
+
+  console.log("body", req.body);
+  if (username) user.username = username;
   if (email) user.email = email;
   if (address) user.address = address;
   if (city) user.city = city;
   if (country) user.country = country;
   if (pinCode) user.pinCode = pinCode;
-
+  if (oldPassword && newPassword) {
+    console.log("old", oldPassword);
+    const isMatched = await user.comparePassword(oldPassword);
+    console.log(isMatched);
+    if (!isMatched)
+      return next(new ErrorHandler("Incorrect Old Password", 400));
+    user.password = newPassword;
+  }
   await user.save();
 
   res.status(200).json({
     success: true,
     message: "Profile Updated Successfully",
+    user,
   });
 });
 
@@ -112,7 +139,7 @@ export const changePassword = asyncError(async (req, res, next) => {
     );
 
   const isMatched = await user.comparePassword(oldPassword);
-console.log(isMatched);
+  console.log(isMatched);
   if (!isMatched) return next(new ErrorHandler("Incorrect Old Password", 400));
   // res.status(200).json({
   //       success: true,
@@ -120,7 +147,7 @@ console.log(isMatched);
   //     });
   user.password = newPassword;
   await user.save();
-// console.log('guyy')
+  // console.log('guyy')
   res.status(200).json({
     success: true,
     message: "Password Changed Successully",
@@ -206,5 +233,48 @@ export const resetpassword = asyncError(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Password Changed Successfully, You can login now",
+  });
+});
+
+export const getAdminUsers = asyncError(async (req, res, next) => {
+  const users = await User.find({});
+  const newUsers = users.map((item, i) => {
+    const { isActiveSub, username, email } = item;
+    return {
+      isActiveSub,
+      username,
+      email,
+    };
+  });
+  // const outOfStock = products.filter((i) => i.stock === 0);
+
+  res.status(200).json({
+    success: true,
+    newUsers,
+  });
+});
+
+export const handleSubscription = asyncError(async (req, res, next) => {
+  // const users = await User.find({});
+  const users = await User.find();
+  // Loop through each user and perform an action (replace this with your action)
+  // Subtract 1 from the user's active days
+  for (const user of users) {
+    if (user.activeSubType > 0) {
+      user.activeSubType -= 1;
+    }
+
+    // If active days are 0, set subscription to false
+    if (user.activeSubType === 0) {
+      user.isActiveSub = false;
+    }
+    // Save the updated user to the database
+    await user.save();
+  }
+  // const outOfStock = products.filter((i) => i.stock === 0);
+
+  res.status(200).json({
+    success: true,
+    message: "cron-job succeess",
   });
 });

@@ -4,8 +4,8 @@ import { Subs } from "../models/sub.js";
 import ErrorHandler from "../utils/error.js";
 import { stripe } from "../server.js";
 import jwt from "jsonwebtoken";
-import  axios from "axios";
-import  crypto from "crypto";
+import axios from "axios";
+import crypto from "crypto";
 import { User } from "../models/user.js";
 import cron from "node-cron";
 // export const processPayment = asyncError(async (req, res, next) => {
@@ -21,8 +21,6 @@ import cron from "node-cron";
 //     client_secret,
 //   });
 // });
-
-
 
 // export const pays = async (req, res) => {
 //   const secret = process.env.PAY_SECRET;
@@ -55,8 +53,8 @@ export const check = async (req, res) => {
     var event = req.body;
     // Do something with event
     const { reference } = event.data;
-    console.log(event.data)
-    console.log(reference)
+    console.log(event.data);
+    console.log(reference);
     const ordz = await Order.findOne({ orderRef: reference });
     // console.log(ordz);
     if (ordz) {
@@ -82,90 +80,111 @@ export const very = async (req, res) => {
       Authorization: `Bearer ${secret}`,
     },
   };
-          
+
   const ress = await axios(config);
 
   res.json({ success: true, data: ress.data });
 };
 
+export const pays = async (req, res) => {
+  const secret = process.env.PAY_SECRET;
+  // console.log(req.body);
+  //add reference and callback_url
+  var data = req.body;
+  var config = {
+    method: "post",
+    url: "https://api.paystack.co/transaction/initialize",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${secret}`,
+    },
+    data: data,
+  };
+
+  const ress = await axios(config);
+  // console.log(config);
+  res.status(200).json({ success: true, data: ress.data });
+};
+
 export const createSub = asyncError(async (req, res, next) => {
- 
-  const {
-  
-benefit,
+  const { email, amount, reference, callback_url, subType } = req.body;
 
-    totalAmount,
-    orderRef,
-    subType,
-
-  } = req.body;
-
-  await Subs.create({
+  const sub = await Subs.create({
+    orderRef: reference,
+    totalAmount: amount / 100,
     user: req.user._id,
-    benefit,
-    totalAmount,
-    orderRef,
     subType,
   });
 
+  if (!sub) return next(new ErrorHandler("Unable to create subscription", 400));
 
-  res.status(201).json({
-    success: true,
-    message: "make payment",
-  });
-});                            
+  const secret = process.env.PAY_SECRET;
+  // console.log(req.body);
+  //add reference and callback_url
+  var data = {
+    email,
+    amount,
+    callback_url,
+    reference,
+  };
+  var config = {
+    method: "post",
+    url: "https://api.paystack.co/transaction/initialize",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${secret}`,
+    },
+    data: data,
+  };
 
+  const ress = await axios(config);
+  // console.log(config);
+  res.status(200).json({ success: true, data: ress.data });
+  // res.status(201).json({
+  //   success: true,
+  //   message: "make payment",
+  // });
+});
 
 export const getAdminOrders = asyncError(async (req, res, next) => {
   const orders = await Order.find({});
   // console.log('guy')
-// console.log(orders)
+  // console.log(orders)
   res.status(200).json({
     success: true,
     orders,
   });
 });
-
-        
-        
-
-
 
 export const getMyOrders = asyncError(async (req, res, next) => {
   const orders = await Order.find({ user: req.user._id });
-console.log(orders)
+  console.log(orders);
   res.status(200).json({
     success: true,
     orders,
   });
 });
-
-
 
 export const checkSub = asyncError(async (req, res, next) => {
   // const user = await User.find({ _id: req.user._id });
   const { toks } = req.body;
-  // console.log(req.body)
+  console.log(req.body);
   const decodedData = jwt.verify(toks, process.env.JWT_SECRET);
-// console.log(decodedData)
+  // console.log(decodedData)
   const user = await User.findById(decodedData.userId);
-console.log(`user:${user}`);
-let respy ='';
-if(user?.isActiveSub === true){
-respy='user subscription is active.'
-}
-else{
-  respy='user subscription is not active.'
-}
+  console.log(`user:${user}`);
+  let respy = "";
+  if (user?.isActiveSub === true) {
+    respy = "user subscription is active.";
+  } else {
+    respy = "user subscription is not active.";
+  }
 
   res.status(200).json({
     success: true,
-    message:respy
+    message: respy,
   });
-}); 
-
-
-
+});
 
 export const getOrderDetails = asyncError(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
@@ -178,12 +197,12 @@ export const getOrderDetails = asyncError(async (req, res, next) => {
   });
 });
 
-export const deleteOrder= asyncError(async (req, res, next) => {
-  console.log(req)
+export const deleteOrder = asyncError(async (req, res, next) => {
+  console.log(req);
   const ords = await Order.findById(req.params.id);
   if (!ords) return next(new ErrorHandler("order not found", 404));
 
-// console.log(ords)
+  // console.log(ords)
   await ords.remove();
   res.status(200).json({
     success: true,
@@ -209,8 +228,6 @@ export const proccessOrder = asyncError(async (req, res, next) => {
   });
 });
 
-
-
 // */5 * * * * *..5secs, 0 0 * * *..every 12am
 // */3 * * * *
 // cron.schedule("0 0 * * *", async() => {
@@ -221,7 +238,6 @@ export const proccessOrder = asyncError(async (req, res, next) => {
 // user.activeSubType -= 1
 //       }
 
-      
 //          if (user.activeSubType === 0) {
 //           user.isActiveSub = false;
 //         }
@@ -234,7 +250,4 @@ export const proccessOrder = asyncError(async (req, res, next) => {
 //   } catch (error) {
 //     console.error('Error:', error);
 //   }
-// });                    
-          
-
-
+// });
