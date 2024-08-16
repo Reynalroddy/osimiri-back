@@ -6,20 +6,46 @@ import { asyncError } from "./error.js";
 export const isAuthenticated = asyncError(async (req, res, next) => {
   // const token = req.cookies.token;
   const authHeader = req.headers.authorization;
-  console.log(req.headers);
+  // console.log(req.headers);
   if (!authHeader || !authHeader.startsWith("Bearer")) {
-    return next(new ErrorHandler("Authentication invalid", 401));
+    return next(new ErrorHandler("Authentications invalid", 401));
   }
 
   const token = authHeader.split(" ")[1];
-
+  // console.log(token, "toks");
   if (!token) return next(new ErrorHandler("Not Logged In", 401));
 
-  const decodedData = jwt.verify(token, process.env.JWT_SECRET);
+  try {
+    // Verify the token
+    const decodedData = jwt.verify(token, process.env.JWT_SECRET);
 
-  req.user = await User.findById(decodedData._id);
+    // Check if decodedData exists
+    if (!decodedData) {
+      return next(new ErrorHandler("Token invalid", 401));
+    }
 
-  next();
+    // Set the user on the request object for the next middleware
+    req.user = await User.findById(decodedData._id);
+
+    // Move to the next middleware
+    next();
+  } catch (err) {
+    console.log(err);
+    // Handle specific JWT errors
+    if (err.name === "TokenExpiredError") {
+      return next(new ErrorHandler("Token has expired", 401));
+    } else if (err.name === "JsonWebTokenError") {
+      return next(new ErrorHandler("Invalid token", 401));
+    } else {
+      // Handle any other errors
+      return next(new ErrorHandler("Authentication failed", 401));
+    }
+  }
+  // const decodedData = jwt.verify(token, process.env.JWT_SECRET);
+  // console.log(decodedData);
+  // if (!decodedData) return next(new ErrorHandler("Token invalid", 401));
+  // req.user = await User.findById(decodedData._id);
+  // next();
 });
 
 export const isRefreshTokenAuthenticated = asyncError(
